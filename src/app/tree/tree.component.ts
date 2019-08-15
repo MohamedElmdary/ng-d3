@@ -56,11 +56,9 @@ export class TreeComponent implements OnInit {
   }
 
   public ngOnInit(): void {
-    this.treeService
-      .readFile<Tree>('../../assets/data/world.json')
-      .subscribe(data => {
-        this.tree.data = data;
-      });
+    this.treeService.readFile<Tree>().subscribe(data => {
+      this.tree.data = data;
+    });
   }
 
   get width() {

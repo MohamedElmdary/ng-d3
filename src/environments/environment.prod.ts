@@ -1,3 +1,6 @@
+import { variables } from './variables.prod';
+
 export const environment = {
-  production: true
+  production: true,
+  variables
 };
