@@ -2,9 +2,8 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  template: `
+    <app-tree> </app-tree>
+  `
 })
-export class AppComponent {
-  title = 'ng-d3';
-}
+export class AppComponent {}

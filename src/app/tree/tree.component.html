@@ -1,0 +1,32 @@
+<svg
+  [attr.width]="tree.width"
+  [attr.height]="tree.height"
+  (wheel)="zoom($event, contianer)"
+  (mousedown)="clicked = { top: $event.clientX, left: $event.clientY }"
+  (mouseup)="clicked = null"
+  (mousemove)="onMoveItem($event, $event.clientX, $event.clientY, contianer)"
+>
+  <g
+    [attr.transform]="
+      concat('translate(', tree.margin.top, ',', tree.margin.left, ')')
+    "
+    [ngStyle]="{ 'over-flow': 'hidden' }"
+  >
+    <g #contianer>
+      <path
+        *ngFor="let link of tree.links"
+        [attr.d]="generateLink(link)"
+        fill="none"
+        stroke="#34495e"
+      ></path>
+      <text
+        *ngFor="let node of tree.nodes"
+        [attr.x]="node.y"
+        [attr.y]="node.x"
+        [ngStyle]="{ 'font-size': 3.1 - node.depth + 'rem' }"
+      >
+        {{ node.data.data.id }}
+      </text>
+    </g>
+  </g>
+</svg>
