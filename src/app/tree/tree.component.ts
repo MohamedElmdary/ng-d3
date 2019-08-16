@@ -17,7 +17,7 @@ import {
   tree as treeLayout,
   HierarchyPointLink
 } from 'd3-hierarchy';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 import { select, event } from 'd3-selection';
 import { zoom } from 'd3-zoom';
 
@@ -52,6 +52,9 @@ export class TreeComponent implements OnInit, OnDestroy {
   public ngOnInit(): void {
     this.treeService.readFile<Tree>().subscribe(data => {
       this.tree.data = data;
+      if (isPlatformServer(this.platformId)) {
+        this.render(data);
+      }
     });
 
     // check that platformisbrowser before add listener using d3
