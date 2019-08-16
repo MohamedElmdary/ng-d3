@@ -1,29 +1,29 @@
-<svg
-  [attr.width]="tree.width"
-  [attr.height]="tree.height"
-  (wheel)="zoom($event, contianer)"
-  (mousedown)="clicked = { top: $event.clientX, left: $event.clientY }"
-  (mouseup)="clicked = null"
-  (mousemove)="onMoveItem($event, $event.clientX, $event.clientY, contianer)"
->
+<svg #svg [attr.width]="tree.width" [attr.height]="tree.height">
   <g
     [attr.transform]="
-      concat('translate(', tree.margin.top, ',', tree.margin.left, ')')
+      concat('translate(', tree.margin.left, ',', tree.margin.top, ')')
     "
-    [ngStyle]="{ 'over-flow': 'hidden' }"
   >
-    <g #contianer>
+    <g #gZoom>
       <path
         *ngFor="let link of tree.links"
         [attr.d]="generateLink(link)"
         fill="none"
-        stroke="#34495e"
+        stroke="dodgerblue"
+        stroke-width="0.2"
       ></path>
       <text
         *ngFor="let node of tree.nodes"
-        [attr.x]="node.y"
-        [attr.y]="node.x"
-        [ngStyle]="{ 'font-size': 3.1 - node.depth + 'rem' }"
+        [attr.x]="
+          node.depth !== 3 ? node.y - 130 / (node.depth + 1) : node.y + 1
+        "
+        [attr.y]="
+          node.depth !== 3 ? node.x + 15 / (node.depth + 1) : node.x + 0.55
+        "
+        [ngStyle]="{
+          'font-size': 3.1 - node.depth + 'rem',
+          fill: '#444'
+        }"
       >
         {{ node.data.data.id }}
       </text>

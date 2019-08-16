@@ -39,5 +39,4 @@ export interface SvgTree<T = any> {
   data: T;
   links: Array<HierarchyPointLink<unknown>>;
   nodes: TreeNode[];
-  zoom: string;
 }

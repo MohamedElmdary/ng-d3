@@ -1,4 +1,14 @@
-import { Component, HostListener, OnInit, Renderer2 } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  OnInit,
+  Renderer2,
+  ViewChild,
+  ElementRef,
+  Inject,
+  PLATFORM_ID,
+  OnDestroy
+} from '@angular/core';
 import { resolutions, Tree, SvgTree, TreeNode } from './tree.utils';
 import { TreeService } from './tree.service';
 import { linkHorizontal } from 'd3-shape';
@@ -7,43 +17,65 @@ import {
   tree as treeLayout,
   HierarchyPointLink
 } from 'd3-hierarchy';
+import { isPlatformBrowser } from '@angular/common';
+import { select, event } from 'd3-selection';
+import { zoom } from 'd3-zoom';
 
 @Component({
   selector: 'app-tree',
-  templateUrl: './tree.component.html',
-  styleUrls: ['./tree.component.scss']
+  templateUrl: './tree.component.html'
 })
-export class TreeComponent implements OnInit {
-  private zoomLevels: { scale: number; top: number; left: number } = {
-    scale: 1,
-    top: 0,
-    left: 0
-  };
-  public clicked: { top: number; left: number } | null = null;
+export class TreeComponent implements OnInit, OnDestroy {
+  @ViewChild('svg', { static: true }) public svg: ElementRef;
+  @ViewChild('gZoom', { static: true }) public gZoom: ElementRef;
+
   public tree: SvgTree<Tree> = {
     height: 0,
     width: 0,
     margin: {
-      top: 100,
-      left: 100,
-      bottom: 100,
-      right: 100
+      top: 50,
+      left: 150,
+      bottom: 50,
+      right: 50
     },
     data: null,
     links: [],
-    nodes: [],
-    zoom: ''
+    nodes: []
   };
 
   constructor(
     private readonly treeService: TreeService,
-    private readonly renderer: Renderer2
+    private readonly renderer: Renderer2,
+    @Inject(PLATFORM_ID) private readonly platformId: object
   ) {}
+
+  public ngOnInit(): void {
+    this.treeService.readFile<Tree>().subscribe(data => {
+      this.tree.data = data;
+    });
+
+    // check that platformisbrowser before add listener using d3
+    if (isPlatformBrowser(this.platformId)) {
+      select(this.svg.nativeElement).call(
+        zoom().on('zoom', () => {
+          this.renderer.setAttribute(
+            this.gZoom.nativeElement,
+            'transform',
+            event.transform
+          );
+        })
+      );
+    }
+  }
 
   @HostListener('window:resize', resolutions)
   @HostListener('window:load', resolutions)
   public onload(height: number, width: number) {
-    this.tree.height = height;
+    if (height < 1000) {
+      this.tree.height = 1000;
+    } else {
+      this.tree.height = height;
+    }
     this.tree.width = width;
     this.render(this.tree.data);
   }
@@ -53,12 +85,6 @@ export class TreeComponent implements OnInit {
     const root = hierarchy(data);
     this.tree.nodes = (root.descendants() as unknown) as TreeNode[];
     this.tree.links = tree(root).links();
-  }
-
-  public ngOnInit(): void {
-    this.treeService.readFile<Tree>().subscribe(data => {
-      this.tree.data = data;
-    });
   }
 
   get width() {
@@ -83,49 +109,8 @@ export class TreeComponent implements OnInit {
       .y(({ x }: any) => x) as any)(link);
   }
 
-  public zoom(e: WheelEvent, parent: HTMLOptGroupElement) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.deltaY > 0 && this.zoomLevels.scale < 15) {
-      this.zoomLevels.scale += 0.5;
-    } else if (e.deltaY < 0 && this.zoomLevels.scale > 0.1) {
-      if (this.zoomLevels.scale > 1.5) {
-        this.zoomLevels.scale -= 0.5;
-      } else {
-        this.zoomLevels.scale -= 0.1;
-      }
-    }
-    this.setTransform(parent);
-  }
-
-  public onMoveItem(
-    e: MouseEvent,
-    top: number,
-    left: number,
-    parent: HTMLOptGroupElement
-  ) {
-    if (!this.clicked) {
-      return;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    this.zoomLevels.top = this.zoomLevels.top + top - this.clicked.top;
-    this.clicked.top = top;
-    this.zoomLevels.left = this.zoomLevels.left + left - this.clicked.left;
-    this.clicked.left = left;
-
-    this.setTransform(parent);
-  }
-
-  private setTransform(parent: HTMLOptGroupElement): void {
-    this.renderer.setStyle(
-      parent,
-      'transform',
-      `scale(${this.zoomLevels.scale}) translate(${this.zoomLevels.top}px, ${
-        this.zoomLevels.left
-      }px)`
-    );
+  public ngOnDestroy(): void {
+    // remove d3 listener on destroy component
+    select(this.svg.nativeElement).on('zoom', null);
   }
 }
